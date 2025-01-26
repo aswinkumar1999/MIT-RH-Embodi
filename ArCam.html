@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
+    <script src="https://libs.zappar.com/zappar-aframe/2.0.0/zappar-aframe.js"></script>
+
+    <meta charset="utf-8" />
+    <title>Zappar for A-Frame: Face Tracking Face Mesh Example</title>
+    <style>
+        html,
+        body {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+        }
+    </style>
+</head>
+
+<body>
+    <a-scene>
+        <!-- Ask user for camera permissions, display some text if permission is denied -->
+        <a-entity zappar-permissions-ui id="permissions"></a-entity>
+        <!-- Shows a full-page dialog that informs the user they're using an unsupported browser -->
+        <a-entity zappar-compatibility-ui id="compatibility"></a-entity>
+
+        <!-- Camera setup -->
+        <a-camera zappar-camera="user-facing: true;"></a-camera>
+
+        <!-- Setup our face anchor to track the face -->
+        <a-entity zappar-face id="face-anchor">
+            <!-- Add a box positioned above the head -->
+            <a-box 
+                position="0 0.9 0"
+                width="2" 
+                height=".6" 
+                depth="0.2" 
+                material="color: red; opacity: 0.5;" 
+                id="dynamic-box"> <!-- Semi-transparent red box -->
+
+                <!-- Add text inside the box -->
+                <a-text 
+                    id="dynamic-text" <!-- Assign an ID for easy access -->
+                    value="Loading..."  <!-- Initial text content -->
+                    align="center"  <!-- Center align the text -->
+                    position="-1 -1 0"  <!-- Position inside the box -->
+                    color="white"  <!-- Text color -->
+                    width="2"> <!-- Scale the text width -->
+                </a-text>
+
+            </a-box>
+        </a-entity>
+    </a-scene>
+
+    <script>
+        // Function to change box color based on the message
+        function updateBoxColor(message) {
+            const boxElement = document.querySelector('#dynamic-box');
+            if (!boxElement) return; // Exit if box doesn't exist
+            
+            let color = "red"; // Default color for "Angry"
+
+            switch (message.toLowerCase()) {
+                case "happy":
+                    color = "yellow";
+                    break;
+                case "sad":
+                    color = "blue";
+                    break;
+                case "angry":
+                    color = "red";
+                    break;
+                case "relaxed":
+                    color = "purple";
+                    break;
+                default:
+                    color = "gray"; // Default color if unknown message
+            }
+
+            boxElement.setAttribute('material', 'color', color); // Update the box color
+        }
+
+        // Simple fetch request to a local server
+        async function fetchData() {
+            try {
+                console.log('Fetching data from local server...');
+                const response = await fetch('http://10.29.145.131:4000'); // Replace with your local server URL
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const data = await response.json();
+                console.log('Fetched data:', data);
+
+                // Update the a-text value with the fetched data
+                const textElement = document.querySelector('#dynamic-text');
+                if (textElement) {
+                    const message = data.data || 'No data received'; // Assuming `data.message` contains the text
+                    textElement.setAttribute('value', message);
+                    
+                    // Update the box color based on the message
+                    updateBoxColor(message);
+                }
+            } catch (error) {
+                console.error('Error fetching data:', error.message);
+
+                // Show error message in the text
+                const textElement = document.querySelector('#dynamic-text');
+                if (textElement) {
+                    textElement.setAttribute('value', 'Error fetching data');
+                }
+
+                // Default box color for errors
+                const boxElement = document.querySelector('#dynamic-box');
+                if (boxElement) {
+                    boxElement.setAttribute('material', 'color', 'gray');
+                }
+            }
+        }
+
+        // Periodically fetch data every 5000 ms (5 seconds)
+        setInterval(fetchData, 5000); // Fetch every 5 seconds
+    </script>
+</body>
+
+</html>
